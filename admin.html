@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣小學大戰 - GM 總管理處</title>
+    <style>
+        body { font-family: sans-serif; background-color: #2c3e50; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 500px; margin: 0 auto; background: #34495e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        h1 { color: #f1c40f; font-size: 24px; }
+        .section { border-bottom: 1px solid #7f8c8d; padding: 15px 0; }
+        button { background: #e74c3c; color: white; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; margin: 5px; }
+        button:hover { background: #c0392b; }
+        .btn-green { background: #2ecc71; }
+        .btn-green:hover { background: #27ae60; }
+        input { padding: 8px; border-radius: 4px; border: none; margin: 5px; width: 80%; text-align: center; }
+        #admin-box { display: none; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🕵️‍♂️ 3年2班 核心控制台 (GM Only)</h1>
+        
+        <!-- 🔐 密碼驗證區 -->
+        <div id="auth-box">
+            <p>請輸入管理員終極密碼：</p>
+            <input type="password" id="gm-pass" placeholder="輸入密碼">
+            <button class="btn-green" onclick="verifyGM()">登入控制台</button>
+        </div>
+
+        <!-- 🎛️ 核心控制區 -->
+        <div id="admin-box">
+            
+            <!-- 1. 時間掌控者 -->
+            <div class="section">
+                <h3>🕒 時間與鐘聲控制</h3>
+                <button class="btn-green" onclick="changeMode('上課')">👨‍🏫 強制切換【上課】</button>
+                <button class="btn-green" onclick="changeMode('下課')">🏃‍♂️ 強制切換【下課】</button>
+                <p>目前狀態將會立即同步給全服玩家</p>
+            </div>
+
+            <!-- 2. 領土神之手 -->
+            <div class="section">
+                <h3>💣 領土天罰系統</h3>
+                <input type="text" id="tile-coord" placeholder="輸入座標，例如: 25_25">
+                <button onclick="wipeTile()">💥 炸毀該格領地</button>
+                <button onclick="wipeAllMap()">🔥 毀天滅地 (清空全地圖)</button>
+            </div>
+
+            <!-- 3. 聊天室淨化 -->
+            <div class="section">
+                <h3>💬 秩序維護</h3>
+                <button onclick="clearChat()">🧹 擦黑板 (清空聊天室)</button>
+            </div>
+
+            <p style="color: #ffff; font-size: 11px; margin-top: 20px;">最高權限使用中，請謹慎操作</p>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            databaseURL: "https://taiwan-school-war-default-rtdb.europe-west1.firebasedatabase.app/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 🤫 你的網頁後台密碼，我幫你預設為 admin321，你可以自己修改下面這行
+        const MASTER_PASSWORD = "admin321";
+
+        function verifyGM() {
+            const input = document.getElementById('gm-pass').value;
+            if (input === MASTER_PASSWORD) {
+                document.getElementById('auth-box').style.display = 'none';
+                document.getElementById('admin-box').style.display = 'block';
+                alert("🔮 歡迎創世神登入！系統已就緒。");
+            } else {
+                alert("❌ 密碼錯誤！想偷看後台？去告老師喔！");
+            }
+        }
+
+        // 控制時間
+        function changeMode(targetMode) {
+            db.ref('server_time').set({
+                mode: targetMode,
+                timeLeft: targetMode === "下課" ? 50 : 40,
+                hostId: "GM_CONTROLLER"
+            });
+            alert(`已將全校切換為【${targetMode}】狀態！`);
+        }
+
+        // 炸毀某一格
+        function wipeTile() {
+            const coord = document.getElementById('tile-coord').value.trim();
+            if(!coord) { alert("請輸入座標！"); return; }
+            db.ref('global_map/' + coord).remove();
+            alert(`💥 座標 ${coord} 已被神力夷為平地！`);
+        }
+
+        // 清空地圖
+        function wipeAllMap() {
+            if(confirm("💣 確定要使用毀天滅地嗎？這會清除所有人的領地！")) {
+                db.ref('global_map').remove();
+                db.ref('chat').push({ name: "📢 天罰廣播", text: "⚡ 突然雷電大作！全校領地已被創世神強制重置！", color: "#e74c3c" });
+                alert("全地圖已清空！");
+            }
+        }
+
+        // 清空聊天室
+        function clearChat() {
+            if(confirm("確定要清空聊天室嗎？")) {
+                db.ref('chat').remove();
+                db.ref('chat').push({ name: "系統", text: "🧹 值日生把黑板擦乾淨了。", color: "#2ecc71" });
+                alert("黑板已擦乾淨！");
+            }
+        }
+    </script>
+</body>
+</html>
