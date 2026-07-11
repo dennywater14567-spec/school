@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台灣小學大戰 - GM 創世神主控台 v2.0</title>
+    <title>台灣小學大戰 - GM 創世神主控台 v2.2</title>
     <style>
         body { font-family: sans-serif; background-color: #111827; color: #f3f4f6; padding: 20px; text-align: center; }
         .container { max-width: 650px; margin: 0 auto; background: #1f2937; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #374151; }
@@ -23,16 +23,16 @@
         select { color: #f59e0b; cursor: pointer; }
         .flex-row { display: flex; gap: 12px; align-items: center; }
         #admin-box { display: none; }
-        .badge { background: #374151; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #9ca3af; margin-left: auto; }
     </style>
+    <!-- 引入 Firebase 核心套件 -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
     <div class="container">
-        <h1>⚡ 3年2班 創世神主控台 <span style="font-size: 14px; color:#ef4444;">v2.0</span></h1>
-        <div class="subtitle">權限角色：最高階級總管理員 (正式資安架構)</div>
+        <h1>⚡ 3年2班 創世神主控台 <span style="font-size: 14px; color:#ef4444;">v2.2</span></h1>
+        <div class="subtitle">最高權限角色：總管理員（網址修復版）</div>
         
         <!-- 🔐 密碼驗證區 -->
         <div id="auth-box">
@@ -56,15 +56,19 @@
             <!-- 2. 全自動玩家物資控制面板 -->
             <div class="section">
                 <h3>🎁 智慧玩家物資更改面板</h3>
-                <label style="font-size: 13px; color: #9ca3af;">🎯 第一步：選擇目標玩家（系統已自動同步雲端名單）</label>
-                <select id="player-select">
-                    <option value="">-- 請選擇在線玩家 --</option>
-                </select>
+                <label style="font-size: 13px; color: #9ca3af;">🎯 第一步：選擇目標玩家</label>
+                
+                <div class="flex-row" style="margin-bottom: 5px;">
+                    <select id="player-select" style="flex: 4;">
+                        <option value="">-- 請輸入密碼解鎖名單 --</option>
+                    </select>
+                    <button class="btn-green" id="refresh-btn" onclick="loadPlayerList()" style="flex: 1.5; margin: 0; padding: 10px; font-size: 12px; display: none;">🔄 刷新名單</button>
+                </div>
 
-                <label style="font-size: 13px; color: #9ca3af; margin-top: 10px; display: block;">💰 第二步：設定更改數量（例如輸入 1000 或 50）</label>
+                <label style="font-size: 13px; color: #9ca3af; margin-top: 10px; display: block;">💰 第二步：設定更改數量</label>
                 <input type="number" id="stat-amount" value="1000" placeholder="請輸入數量">
 
-                <label style="font-size: 13px; color: #9ca3af; margin-top: 10px; display: block;">⚡ 第三步：選擇你要執行的神蹟</label>
+                <label style="font-size: 13px; color: #9ca3af; margin-top: 10px; display: block;">⚡ 第三步：選擇執行動作（支援不斷累加）</label>
                 <div class="flex-row" style="margin-top: 5px;">
                     <button class="btn-blue" onclick="modifyStat('snack', 'add')" style="flex: 1;">🍪 零食 往上加 (+)</button>
                     <button class="btn-purple" onclick="modifyStat('snack', 'set')" style="flex: 1;">🎯 零食 直接設 (=)</button>
@@ -104,67 +108,66 @@
     </div>
 
     <script>
-        // Firebase 設定
+        // ==========================================
+        // 🛠️ 【重要！請在這裡填入你的 Firebase 網址】
+        // ==========================================
         const firebaseConfig = {
             databaseURL: "https://taiwan-school-war-default-rtdb.europe-west1.firebasedatabase.app/server_time"
         };
+        // ==========================================
+
+        // 初始化 Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 登入驗證與玩家名單自動同步
+        // 登入驗證
         function verifyGM() {
             const input = document.getElementById('gm-pass').value;
             if (input === "admin321") {
                 document.getElementById('auth-box').style.display = 'none';
                 document.getElementById('admin-box').style.display = 'block';
-                alert("🔮 創世神權限已解鎖！正在同步在線玩家名單...");
-                loadPlayerList(); // 登入成功，立刻去抓玩家名單
+                document.getElementById('refresh-btn').style.display = 'block';
+                
+                // 登入成功，立刻強制抓取雲端名單
+                loadPlayerList();
             } else {
                 alert("❌ 密碼錯誤！");
             }
         }
 
-        // 核心：強制同步 Firebase 的所有玩家名字，並塞進下拉選單
+        // 強制拉取 Firebase 玩家節點（專治無痕模式與各種卡死）
         function loadPlayerList() {
             const select = document.getElementById('player-select');
+            if (!select) return;
+
             select.innerHTML = '<option value="">⏳ 正在強力讀取雲端名單...</option>'; 
 
-            // 使用 once 確保無痕模式下也能瞬間強制拉取一次最新資料
             db.ref('users').once('value').then((snapshot) => {
                 select.innerHTML = '<option value="">-- 請選擇在線玩家 --</option>'; 
                 
                 if (snapshot.exists()) {
-                    let count = 0;
+                    let hasPlayers = false;
                     snapshot.forEach((childSnapshot) => {
                         const playerName = childSnapshot.key;
-                        const option = document.createElement('option');
-                        option.value = playerName;
-                        option.textContent = `👤 ${playerName}`;
-                        select.appendChild(option);
-                        count++;
+                        if (playerName) {
+                            const option = document.createElement('option');
+                            option.value = playerName;
+                            option.textContent = `👤 ${playerName}`;
+                            select.appendChild(option);
+                            hasPlayers = true;
+                        }
                     });
-                    console.log(`成功載入 ${count} 位玩家`);
+                    if (!hasPlayers) {
+                        select.innerHTML = '<option value="">❌ 雲端結構中無有效玩家</option>';
+                    }
                 } else {
                     select.innerHTML = '<option value="">❌ 雲端目前沒有任何玩家資料</option>';
                 }
             }).catch((error) => {
                 console.error("讀取失敗:", error);
-                select.innerHTML = '<option value="">❌ 讀取失敗，請檢查 Firebase 規則</option>';
-            });
-
-            // 保留原本的即時監聽，有新玩家加入時會自動補進去
-            db.ref('users').on('child_added', (snapshot) => {
-                const playerName = snapshot.key;
-                // 檢查是否已經存在選單中，不存在才加
-                if (!Array.from(select.options).some(opt => opt.value === playerName)) {
-                    const option = document.createElement('option');
-                    option.value = playerName;
-                    option.textContent = `👤 ${playerName} (新上線)`;
-                    select.appendChild(option);
-                }
+                select.innerHTML = '<option value="">❌ 讀取失敗，請確認 Firebase 規則</option>';
             });
         }
-
 
         // 1. 修改時間
         function changeMode(targetMode) {
@@ -172,9 +175,10 @@
             alert(`已切換為【${targetMode}】`);
         }
 
-        // 2. 超進化物資控制面板邏輯（支援加法與直接覆蓋）
+        // 2. 物資控制核心（支援累加與覆蓋）
         function modifyStat(type, method) {
-            const player = document.getElementById('player-select').value;
+            const select = document.getElementById('player-select');
+            const player = select ? select.value : '';
             const amountInput = document.getElementById('stat-amount').value;
             
             if(!player) { alert("❌ 請先在下拉選單選取一名玩家！"); return; }
@@ -183,16 +187,16 @@
             const val = Number(amountInput);
 
             if (method === 'set') {
-                // 直接覆蓋值 (=)
                 db.ref('users/' + player + '/' + type).set(val);
                 alert(`🧙‍♂️ 神蹟顯靈！已將 ${player} 的 ${type.toUpperCase()} 直接覆蓋設定為 ${val}！`);
             } else if (method === 'add') {
-                // 往上累加 (+)
                 db.ref('users/' + player + '/' + type).once('value').then((snapshot) => {
                     const current = Number(snapshot.val()) || 0;
                     const total = current + val;
                     db.ref('users/' + player + '/' + type).set(total);
                     alert(`🧙‍♂️ 神蹟顯靈！已幫 ${player} 的 ${type.toUpperCase()} 增加了 ${val}！(目前總共: ${total})`);
+                }).catch((err) => {
+                    alert("❌ 數據讀取失敗，請重試。");
                 });
             }
         }
