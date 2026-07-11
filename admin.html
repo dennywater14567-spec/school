@@ -3,17 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台灣小學大戰 - GM 總管理處</title>
+    <title>台灣小學大戰 - GM 終極總管理處</title>
     <style>
-        body { font-family: sans-serif; background-color: #2c3e50; color: white; padding: 20px; text-align: center; }
-        .container { max-width: 500px; margin: 0 auto; background: #34495e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        h1 { color: #f1c40f; font-size: 24px; }
-        .section { border-bottom: 1px solid #7f8c8d; padding: 15px 0; }
-        button { background: #e74c3c; color: white; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; margin: 5px; }
+        body { font-family: sans-serif; background-color: #1a252f; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: 0 auto; background: #2c3e50; padding: 25px; border-radius: 12px; box-shadow: 0 6px 15px rgba(0,0,0,0.4); }
+        h1 { color: #f1c40f; font-size: 26px; margin-bottom: 5px; }
+        .subtitle { color: #bdc3c7; font-size: 14px; margin-bottom: 25px; }
+        .section { border: 1px solid #34495e; background: #34495e; border-radius: 8px; padding: 15px; margin-bottom: 15px; text-align: left; }
+        .section h3 { margin-top: 0; color: #3498db; border-bottom: 2px solid #2980b9; padding-bottom: 5px; }
+        button { background: #e74c3c; color: white; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; margin: 5px 2px; }
         button:hover { background: #c0392b; }
         .btn-green { background: #2ecc71; }
         .btn-green:hover { background: #27ae60; }
-        input { padding: 8px; border-radius: 4px; border: none; margin: 5px; width: 80%; text-align: center; }
+        .btn-blue { background: #3498db; }
+        .btn-blue:hover { background: #2980b9; }
+        input { padding: 10px; border-radius: 6px; border: none; margin: 5px 0; width: 95%; background: #ecf0f1; color: #2c3e50; font-weight: bold; }
+        .flex-row { display: flex; gap: 10px; }
         #admin-box { display: none; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -22,13 +27,14 @@
 <body>
 
     <div class="container">
-        <h1>🕵️‍♂️ 3年2班 核心控制台 (GM Only)</h1>
+        <h1>🕵️‍♂️ 3年2班 終極主控台</h1>
+        <div class="subtitle">權限等級：最高創世神 (GM Mode)</div>
         
         <!-- 🔐 密碼驗證區 -->
         <div id="auth-box">
             <p>請輸入管理員終極密碼：</p>
             <input type="password" id="gm-pass" placeholder="輸入密碼">
-            <button class="btn-green" onclick="verifyGM()">登入控制台</button>
+            <button class="btn-green" onclick="verifyGM()" style="width: 100%; margin-top: 10px;">登入控制台</button>
         </div>
 
         <!-- 🎛️ 核心控制區 -->
@@ -39,82 +45,135 @@
                 <h3>🕒 時間與鐘聲控制</h3>
                 <button class="btn-green" onclick="changeMode('上課')">👨‍🏫 強制切換【上課】</button>
                 <button class="btn-green" onclick="changeMode('下課')">🏃‍♂️ 強制切換【下課】</button>
-                <p>目前狀態將會立即同步給全服玩家</p>
             </div>
 
-            <!-- 2. 領土神之手 -->
+            <!-- 2. 神之恩賜（修改玩家資料） -->
             <div class="section">
-                <h3>💣 領土天罰系統</h3>
-                <input type="text" id="tile-coord" placeholder="輸入座標，例如: 25_25">
-                <button onclick="wipeTile()">💥 炸毀該格領地</button>
-                <button onclick="wipeAllMap()">🔥 毀天滅地 (清空全地圖)</button>
+                <h3>🎁 玩家物資補給 / 處罰</h3>
+                <input type="text" id="target-player" placeholder="請輸入目標玩家精確暱稱">
+                <div class="flex-row">
+                    <button class="btn-blue" onclick="adjustStat('snack', 1000)" style="flex: 1;">🍪 賞賜 1000 零食</button>
+                    <button class="btn-blue" onclick="adjustStat('ap', 100)" style="flex: 1;">⚡ 補滿 100 AP</button>
+                </div>
+                <button onclick="resetPlayer()" style="width: 100%; background: #95a5a6;">🗑️ 歸零該玩家財產</button>
             </div>
 
-            <!-- 3. 聊天室淨化 -->
+            <!-- 3. 全服大聲公 -->
             <div class="section">
-                <h3>💬 秩序維護</h3>
-                <button onclick="clearChat()">🧹 擦黑板 (清空聊天室)</button>
+                <h3>📢 創世神降臨廣播</h3>
+                <input type="text" id="broadcast-msg" placeholder="輸入你想對全校公告的話...">
+                <button class="btn-green" onclick="sendBroadcast()" style="width: 100%;">⚡ 發送全服跑馬燈</button>
             </div>
 
-            <p style="color: #ffff; font-size: 11px; margin-top: 20px;">最高權限使用中，請謹慎操作</p>
+            <!-- 4. 領土與秩序 -->
+            <div class="section">
+                <h3>💣 天罰與秩序系統</h3>
+                <input type="text" id="tile-coord" placeholder="輸入地圖座標 (例如: 12_15)">
+                <button onclick="wipeTile()">💥 炸毀此格子</button>
+                <button onclick="clearChat()">🧹 擦黑板 (清空聊天)</button>
+                <button onclick="wipeAllMap()" style="background: #962d22; width: 100%; margin-top: 10px;">🔥 毀天滅地 (清空全地圖)</button>
+            </div>
+
+            <!-- 5. 黑名單系統 -->
+            <div class="section">
+                <h3>🚫 惡魔島 (黑名單系統)</h3>
+                <input type="text" id="ban-player" placeholder="輸入要封鎖的作弊玩家暱稱">
+                <button onclick="banUser()" style="width: 100%;">🔒 限制登入 (Ban)</button>
+            </div>
+
+            <p style="color: #e74c3c; font-size: 11px; margin-top: 20px; font-weight: bold;">⚠️ 警告：神力強大，請勿在同學面前隨意展示，以免引起暴動。</p>
         </div>
     </div>
 
     <script>
         const firebaseConfig = {
-            databaseURL: "https://taiwan-school-war-default-rtdb.europe-west1.firebasedatabase.app/"
+            databaseURL: "填入你的Firebase網址"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 🤫 你的網頁後台密碼，我幫你預設為 admin321，你可以自己修改下面這行
-        const MASTER_PASSWORD = "admin321";
-
         function verifyGM() {
             const input = document.getElementById('gm-pass').value;
-            if (input === MASTER_PASSWORD) {
-                document.getElementById('auth-box').style.display = 'none';
-                document.getElementById('admin-box').style.display = 'block';
-                alert("🔮 歡迎創世神登入！系統已就緒。");
-            } else {
-                alert("❌ 密碼錯誤！想偷看後台？去告老師喔！");
+            
+            // 雲端驗證密碼
+            db.ref('gm_key').once('value').then((snapshot) => {
+                const correctPassword = snapshot.val() || "admin321"; // 若雲端沒設，預設為 admin321
+                if (input === correctPassword) {
+                    document.getElementById('auth-box').style.display = 'none';
+                    document.getElementById('admin-box').style.display = 'block';
+                    alert("🔮 創世神權限已解鎖！");
+                } else {
+                    alert("❌ 密碼錯誤！");
+                }
+            });
+        }
+
+        // 1. 修改時間
+        function changeMode(targetMode) {
+            db.ref('server_time').set({ mode: targetMode, timeLeft: targetMode === "下課" ? 50 : 40, hostId: "GM_CONTROLLER" });
+            alert(`已切換為【${targetMode}】`);
+        }
+
+        // 2. 修改玩家數值 (假設你的 Firebase 玩家路徑是 users/玩家暱稱/)
+        function adjustStat(type, amount) {
+            const player = document.getElementById('target-player').value.trim();
+            if(!player) { alert("請輸入玩家暱稱！"); return; }
+            
+            const userRef = db.ref('users/' + player + '/' + type);
+            userRef.transaction((currentValue) => {
+                return (currentValue || 0) + amount;
+            });
+            alert(`已成功幫 ${player} 的 ${type.toUpperCase()} 增加了 ${amount}！`);
+        }
+
+        // 歸零玩家
+        function resetPlayer() {
+            const player = document.getElementById('target-player').value.trim();
+            if(!player) return;
+            if(confirm(`確定要沒收 ${player} 的所有財產嗎？`)) {
+                db.ref('users/' + player).set({ snack: 0, ap: 0, role: "未選擇" });
+                alert(`${player} 已變成破產平民。`);
             }
         }
 
-        // 控制時間
-        function changeMode(targetMode) {
-            db.ref('server_time').set({
-                mode: targetMode,
-                timeLeft: targetMode === "下課" ? 50 : 40,
-                hostId: "GM_CONTROLLER"
+        // 3. 發送全服公告 (會直接插進聊天室，或是如果你的遊戲主頁有廣播欄位可以綁定這條)
+        function sendBroadcast() {
+            const msg = document.getElementById('broadcast-msg').value.trim();
+            if(!msg) return;
+            db.ref('chat').push({
+                name: "📢 創世神旨意",
+                text: "✨ " + msg + " ✨",
+                color: "#f1c40f"
             });
-            alert(`已將全校切換為【${targetMode}】狀態！`);
+            document.getElementById('broadcast-msg').value = "";
+            alert("廣播已發送！");
         }
 
-        // 炸毀某一格
+        // 4. 地圖與聊天
         function wipeTile() {
             const coord = document.getElementById('tile-coord').value.trim();
-            if(!coord) { alert("請輸入座標！"); return; }
+            if(!coord) return;
             db.ref('global_map/' + coord).remove();
-            alert(`💥 座標 ${coord} 已被神力夷為平地！`);
+            alert(`💥 座標 ${coord} 已夷為平地`);
         }
-
-        // 清空地圖
-        function wipeAllMap() {
-            if(confirm("💣 確定要使用毀天滅地嗎？這會清除所有人的領地！")) {
-                db.ref('global_map').remove();
-                db.ref('chat').push({ name: "📢 天罰廣播", text: "⚡ 突然雷電大作！全校領地已被創世神強制重置！", color: "#e74c3c" });
-                alert("全地圖已清空！");
-            }
-        }
-
-        // 清空聊天室
         function clearChat() {
-            if(confirm("確定要清空聊天室嗎？")) {
-                db.ref('chat').remove();
-                db.ref('chat').push({ name: "系統", text: "🧹 值日生把黑板擦乾淨了。", color: "#2ecc71" });
-                alert("黑板已擦乾淨！");
+            db.ref('chat').remove();
+            db.ref('chat').push({ name: "系統", text: "🧹 值日生把黑板擦乾淨了。", color: "#2ecc71" });
+        }
+        function wipeAllMap() {
+            if(confirm("確定要重置全伺服器地圖？")) {
+                db.ref('global_map').remove();
+                db.ref('chat').push({ name: "📢 天罰", text: "⚡ 地圖已被創世神強制重置！", color: "#e74c3c" });
             }
+        }
+
+        // 5. Ban 人系統
+        function banUser() {
+            const player = document.getElementById('ban-player').value.trim();
+            if(!player) return;
+            db.ref('blacklist/' + player).set(true);
+            db.ref('chat').push({ name: "🚫 秩序維護", text: `警報！不守規矩的【${player}】已被抓去訓導處進行無限期輔導！`, color: "#e74c3c" });
+            alert(`已將 ${player} 列入黑名單！`);
         }
     </script>
 </body>
