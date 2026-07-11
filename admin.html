@@ -52,7 +52,7 @@
                 <h3>🎁 玩家物資補給 / 處罰</h3>
                 <input type="text" id="target-player" placeholder="請輸入目標玩家精確暱稱">
                 <div class="flex-row">
-                    <button class="btn-blue" onclick="adjustStat('snack', 1000)" style="flex: 1;">🍪 賞賜 1000 零食</button>
+                    <button class="btn-blue" onclick="adjustStat('snack', 1000)" style="flex: 1;">🍪 賞賜 +1000 零食</button>
                     <button class="btn-blue" onclick="adjustStat('ap', 100)" style="flex: 1;">⚡ 補滿 100 AP</button>
                 </div>
                 <button onclick="resetPlayer()" style="width: 100%; background: #95a5a6;">🗑️ 歸零該玩家財產</button>
@@ -60,7 +60,7 @@
 
             <!-- 3. 全服大聲公 -->
             <div class="section">
-                <h3>📢 創世神降臨廣广播</h3>
+                <h3>📢 創世神降臨廣播</h3>
                 <input type="text" id="broadcast-msg" placeholder="輸入你想對全校公告的話...">
                 <button class="btn-green" onclick="sendBroadcast()" style="width: 100%;">⚡ 發送全服跑馬燈</button>
             </div>
@@ -111,23 +111,25 @@
             alert(`已切換為【${targetMode}】`);
         }
 
-        // 2. 修改玩家數值（安全加法版：點一下就加 1000）
+        // 2. 修改玩家數值（安全加法版：每次點擊就往上加）
         function adjustStat(type, amount) {
             const player = document.getElementById('target-player').value.trim();
             if(!player) { alert("請輸入玩家暱稱！"); return; }
             
-            // 先去資料庫抓他原本有多少錢
+            // 1. 先去雲端撈這名玩家原本有多少數值
             db.ref('users/' + player + '/' + type).once('value').then((snapshot) => {
-                // 如果他原本沒錢或資料不存在，就當作 0，然後加上這次的金額
+                // 2. 把撈出來的資料強制轉成「數字」，如果是空的就當作 0
                 const current = Number(snapshot.val()) || 0; 
+                // 3. 做加法（原本的金額 + 這次要給的 1000）
                 const total = current + amount;
                 
-                // 把加完的總數寫回資料庫
+                // 4. 把加好的總金額送回 Firebase
                 db.ref('users/' + player + '/' + type).set(total);
-                alert(`🧙‍♂️ 神蹟顯靈！已幫 ${player} 的 ${type.toUpperCase()} 增加了 ${amount}（目前總共: ${total}）！`);
+                alert(`🧙‍♂️ 神蹟顯靈！已幫 ${player} 的 ${type.toUpperCase()} 增加了 ${amount}！(目前總共: ${total})`);
+            }).catch((error) => {
+                alert("📡 連線失敗，找不到該玩家的資料。");
             });
         }
-
 
         // 歸零玩家
         function resetPlayer() {
