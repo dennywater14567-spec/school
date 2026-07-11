@@ -86,26 +86,23 @@
     </div>
 
     <script>
+        // Firebase 設定
         const firebaseConfig = {
             databaseURL: "https://taiwan-school-war-default-rtdb.europe-west1.firebasedatabase.app/"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // 登入驗證（獨立密碼，保證可以順利進入）
         function verifyGM() {
             const input = document.getElementById('gm-pass').value;
-            
-            // 雲端驗證密碼
-            db.ref('gm_key').once('value').then((snapshot) => {
-                const correctPassword = snapshot.val() || "admin321"; // 若雲端沒設，預設為 admin321
-                if (input === correctPassword) {
-                    document.getElementById('auth-box').style.display = 'none';
-                    document.getElementById('admin-box').style.display = 'block';
-                    alert("🔮 創世神權限已解鎖！");
-                } else {
-                    alert("❌ 密碼錯誤！");
-                }
-            });
+            if (input === "admin321") {
+                document.getElementById('auth-box').style.display = 'none';
+                document.getElementById('admin-box').style.display = 'block';
+                alert("🔮 創世神權限已解鎖！");
+            } else {
+                alert("❌ 密碼錯誤！");
+            }
         }
 
         // 1. 修改時間
@@ -114,7 +111,7 @@
             alert(`已切換為【${targetMode}】`);
         }
 
-        // 2. 修改玩家數值 (假設你的 Firebase 玩家路徑是 users/玩家暱稱/)
+        // 2. 修改玩家數值
         function adjustStat(type, amount) {
             const player = document.getElementById('target-player').value.trim();
             if(!player) { alert("請輸入玩家暱稱！"); return; }
@@ -136,7 +133,7 @@
             }
         }
 
-        // 3. 發送全服公告 (會直接插進聊天室，或是如果你的遊戲主頁有廣播欄位可以綁定這條)
+        // 3. 發送全服公告
         function sendBroadcast() {
             const msg = document.getElementById('broadcast-msg').value.trim();
             if(!msg) return;
@@ -159,11 +156,13 @@
         function clearChat() {
             db.ref('chat').remove();
             db.ref('chat').push({ name: "系統", text: "🧹 值日生把黑板擦乾淨了。", color: "#2ecc71" });
+            alert("黑板已擦乾淨！");
         }
         function wipeAllMap() {
             if(confirm("確定要重置全伺服器地圖？")) {
                 db.ref('global_map').remove();
                 db.ref('chat').push({ name: "📢 天罰", text: "⚡ 地圖已被創世神強制重置！", color: "#e74c3c" });
+                alert("地圖已全部重置！");
             }
         }
 
@@ -178,4 +177,3 @@
     </script>
 </body>
 </html>
-
