@@ -124,24 +124,47 @@
             }
         }
 
-        // 核心：動態抓取 Firebase 的所有玩家名字，並塞進下拉選單
+        // 核心：強制同步 Firebase 的所有玩家名字，並塞進下拉選單
         function loadPlayerList() {
-            db.ref('users').on('value', (snapshot) => {
-                const select = document.getElementById('player-select');
-                // 保留第一行提示，清空舊名單
+            const select = document.getElementById('player-select');
+            select.innerHTML = '<option value="">⏳ 正在強力讀取雲端名單...</option>'; 
+
+            // 使用 once 確保無痕模式下也能瞬間強制拉取一次最新資料
+            db.ref('users').once('value').then((snapshot) => {
                 select.innerHTML = '<option value="">-- 請選擇在線玩家 --</option>'; 
                 
                 if (snapshot.exists()) {
+                    let count = 0;
                     snapshot.forEach((childSnapshot) => {
                         const playerName = childSnapshot.key;
                         const option = document.createElement('option');
                         option.value = playerName;
                         option.textContent = `👤 ${playerName}`;
                         select.appendChild(option);
+                        count++;
                     });
+                    console.log(`成功載入 ${count} 位玩家`);
+                } else {
+                    select.innerHTML = '<option value="">❌ 雲端目前沒有任何玩家資料</option>';
+                }
+            }).catch((error) => {
+                console.error("讀取失敗:", error);
+                select.innerHTML = '<option value="">❌ 讀取失敗，請檢查 Firebase 規則</option>';
+            });
+
+            // 保留原本的即時監聽，有新玩家加入時會自動補進去
+            db.ref('users').on('child_added', (snapshot) => {
+                const playerName = snapshot.key;
+                // 檢查是否已經存在選單中，不存在才加
+                if (!Array.from(select.options).some(opt => opt.value === playerName)) {
+                    const option = document.createElement('option');
+                    option.value = playerName;
+                    option.textContent = `👤 ${playerName} (新上線)`;
+                    select.appendChild(option);
                 }
             });
         }
+
 
         // 1. 修改時間
         function changeMode(targetMode) {
