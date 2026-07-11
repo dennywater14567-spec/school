@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九年一貫：校園割據戰</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5; margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        h1 { color: #2c3e50; margin-bottom: 5px; font-size: 22px; }
+        
+        /* 🔒 帳密登入彈窗樣式 */
+        #login-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 999;
+        }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; text-align: center; max-width: 90vw; width: 350px;}
+        .auth-input { width: 90%; padding: 10px; font-size: 16px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ccc; text-align: center;}
+        
+        .role-btn {
+            display: block; width: 100%; padding: 10px; margin: 8px 0;
+            font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; border: 2px solid #34495e; background: #fff;
+        }
+        .submit-btn { width: 100%; padding: 12px; font-size: 16px; font-weight: bold; color: white; background-color: #3498db; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        .switch-mode-text { margin-top: 15px; font-size: 13px; color: #34495e; cursor: pointer; text-decoration: underline; font-weight: bold; }
+        .hidden { display: none !important; }
+
+        /* 狀態列 */
+        .status-bar {
+            background-color: #ffffff; padding: 12px 20px; border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 15px;
+            display: flex; gap: 15px; font-size: 14px; font-weight: bold; flex-wrap: wrap; justify-content: center; align-items: center;
+        }
+        #ap-value { color: #e74c3c; }
+        #snack-value { color: #f1c40f; }
+        #role-tag { background: #34495e; color: white; padding: 2px 8px; border-radius: 4px; }
+        #player-name-tag { background: #e67e22; color: white; padding: 2px 8px; border-radius: 4px; }
+        .logout-btn { background-color: #95a5a6; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .logout-btn:hover { background-color: #c0392b; }
+
+        /* 頂部鐘聲跑馬燈 */
+        .event-banner {
+            width: 92vw; background: #ffeaa7; border: 2px solid #f1c40f;
+            padding: 10px; border-radius: 6px; margin-bottom: 15px;
+            text-align: center; font-weight: bold; color: #d35400; font-size: 15px;
+        }
+
+        /* 遊戲面板 */
+        .game-layout { display: flex; gap: 15px; width: 95vw; height: 55vh; }
+        .map-container { flex: 3; overflow: auto; border: 3px solid #34495e; border-radius: 8px; background-color: #bdc3c7; }
+        .grid-map { display: grid; grid-template-columns: repeat(50, 30px); grid-template-rows: repeat(50, 30px); gap: 1px; background-color: #7f8c8d; width: fit-content; }
+        
+        .sidebar { flex: 1; display: flex; flex-direction: column; gap: 10px; height: 100%; min-width: 220px; max-width: 300px; }
+        .panel { background: white; border-radius: 8px; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden;}
+        .panel h3 { margin-top: 0; margin-bottom: 8px; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; font-size: 13px;}
+
+        /* 排行榜與在線名單 */
+        .list-container { flex: 1; overflow-y: auto; font-size: 12px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #f1f2f6; }
+
+        /* 聊天室樣式 */
+        .chat-box { flex: 1.5; display: flex; flex-direction: column; height: 160px; }
+        .chat-messages { flex: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px; background: #fafafa; font-size: 11px; margin-bottom: 5px; }
+        .chat-input-area { display: flex; gap: 5px; }
+        .chat-input-area input { flex: 1; padding: 4px; font-size: 12px; }
+        .chat-btn { padding: 4px 8px; font-size: 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .quick-chat-btn { background: #95a5a6; color: white; border: none; padding: 2px 4px; font-size: 10px; border-radius: 3px; cursor: pointer; margin-right: 2px; margin-top: 2px;}
+
+        /* 格子樣式 */
+        .tile { width: 30px; height: 30px; background-color: #ecf0f1; cursor: pointer; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+        .tile.shop { background-color: #ffeaa7; }
+        .tile.office { background-color: #ff7675; }
+        .tile.playground { background-color: #55efc4; }
+
+        /* 連線佔領 */
+        .tile.occupied { border: 2px dashed #ffffff !important; font-weight: bold; color: white;}
+
+        .log-box { margin-top: 10px; color: #2c3e50; font-size: 13px; font-weight: bold; background: #fff; padding: 10px; border-left: 5px solid #34495e; width: 92vw; text-align: center; box-sizing: border-box;}
+    </style>
+
+    <!-- 載入 Firebase SDK 核心庫 -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+</head>
+<body>
+
+    <!-- 🔒 整合版登入/註冊複合彈窗 -->
+    <div id="login-modal">
+        <div class="modal-content">
+            <h2 id="modal-title">🎒 登入 3年2班 線上系統</h2>
+            
+            <input type="text" id="username-input" class="auth-input" placeholder="輸入你的專屬帳號/綽號" maxlength="8">
+            <input type="password" id="password-input" class="auth-input" placeholder="輸入密碼">
+            
+            <!-- 註冊時才會顯示的職務選擇區 -->
+            <div id="role-selection" class="hidden">
+                <p style="font-size: 13px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px;">請選擇你的開局職務：</p>
+                <button class="role-btn" style="color: #2980b9;" onclick="selectRole('discipline')">🕵️‍♂️ 風紀股長 (擦格子便宜)</button>
+                <button class="role-btn" style="color: #27ae60;" onclick="selectRole('sports')">🏃‍♂️ 體育股長 (操場免AP)</button>
+                <button class="role-btn" style="color: #f39c12;" onclick="selectRole('hygiene')">🧹 衛生股長 (自動產零食)</button>
+                <p id="selected-role-text" style="font-size: 12px; color: #e67e22; font-weight: bold; margin: 5px 0;"></p>
+            </div>
+
+            <button id="submit-auth-btn" class="submit-btn" onclick="handleAuth()">安全登入</button>
+            
+            <div id="switch-mode-btn" class="switch-mode-text" onclick="toggleAuthMode()">還沒有帳號？點此切換到【註冊新角色】</div>
+        </div>
+    </div>
+
+    <h1>九年一貫：校園割據戰</h1>
+
+    <!-- 頂部即時鐘聲系統 -->
+    <div class="event-banner" id="clock-banner">🔔 正在同步全校課堂鐘聲中...</div>
+
+    <!-- 狀態列 -->
+    <div class="status-bar">
+        <div class="status-item">同學: <span id="player-name-tag">未登入</span></div>
+        <div class="status-item">職務: <span id="role-tag">未選擇</span></div>
+        <div class="status-item">🕒 我的 AP: <span id="ap-value">0</span>/100</div>
+        <div class="status-item">🍪 我的 零食: <span id="snack-value">0</span></div>
+        <button class="logout-btn" onclick="logout()">🏃‍♂️ 安全登出</button>
+    </div>
+
+    <!-- 遊戲主區塊 -->
+    <div class="game-layout">
+        <div class="map-container">
+            <div id="map" class="grid-map"></div>
+        </div>
+
+        <div class="sidebar">
+            <!-- 實時排行榜 -->
+            <div class="panel" style="flex: 1;">
+                <h3>🏆 班級領土排行榜</h3>
+                <div id="leaderboard" class="list-container"></div>
+            </div>
+
+            <!-- 即時聊天室 -->
+            <div class="panel chat-box">
+                <h3>💬 同學有話直說 (即時聊天)</h3>
+                <div id="chat-messages" class="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="說點什麼..." maxlength="30" onkeydown="if(event.key==='Enter') sendChatMessage()">
+                    <button class="chat-btn" onclick="sendChatMessage()">送出</button>
+                </div>
+                <div>
+                    <button class="quick-chat-btn" onclick="sendQuickChat('我要去告老師喔！')">🤬 告老師</button>
+                    <button class="quick-chat-btn" onclick="sendQuickChat('超過這條線就是我的！')">📐 超過這條線</button>
+                    <button class="quick-chat-btn" onclick="sendQuickChat('科學麵分我一口啦')">🍗 分一口</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="log-box" id="log">系統提示：請輸入帳號密碼以連接雲端數據。</div>
+
+    <script>
+        // 🛠️ Firebase 配置區 
+        const firebaseConfig = {
+            databaseURL: "https://taiwan-school-war-default-rtdb.europe-west1.firebasedatabase.app/" 
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const MAP_SIZE = 50;
+        
+        let isRegisterMode = false;
+        let chosenRole = ""; // 註冊時暫存的職務
+        
+        let myId = ""; // 登入成功後會變成玩家的帳號
+        let myColor = ""; 
+
+        let myLocalState = { name: "", role: "", ap: 50, snack: 100 };
+        let currentGameMode = "上課"; 
+        let mapTileTypes = {}; 
+        let globalPlayers = {};
+        const roleNames = { discipline: "🕵️‍♂️ 風紀", sports: "🏃‍♂️ 體育", hygiene: "🧹 衛生" };
+
+        function generateTerrainSeeds() {
+            for (let y = 0; y < MAP_SIZE; y++) {
+                for (let x = 0; x < MAP_SIZE; x++) {
+                    let type = "corridor"; 
+                    if ((x===15 && y===15) || (x===35 && y===35) || (x===20 && y===30)) type = "shop";
+                    else if ((x===25 && y===10) || (x===10 && y===25)) type = "office"; 
+                    else if (x >= 5 && x <= 12 && y >= 35 && y <= 45) type = "playground";
+                    mapTileTypes[`${x}_${y}`] = type;
+                }
+            }
+        }
+
+        // 切換 登入 / 註冊 介面
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('modal-title').textContent = isRegisterMode ? "🎒 註冊 3年2班 全新帳號" : "🎒 登入 3年2班 線上系統";
+            document.getElementById('submit-auth-btn').textContent = isRegisterMode ? "完成註冊並登入" : "安全登入";
+            document.getElementById('switch-mode-btn').textContent = isRegisterMode ? "已有帳號？點此切換到【帳號登入】" : "還沒有帳號？點此切換到【註冊新角色】";
+            document.getElementById('role-selection').classList.toggle('hidden', !isRegisterMode);
+            chosenRole = "";
+            document.getElementById('selected-role-text').textContent = "";
+        }
+
+        function selectRole(roleKey) {
+            chosenRole = roleKey;
+            document.getElementById('selected-role-text').textContent = `已選擇職務：${roleNames[roleKey]}`;
+        }
+
+        // 🔒 處理登入與註冊核心驗證
+        async function handleAuth() {
+            const user = document.getElementById('username-input').value.trim();
+            const pass = document.getElementById('password-input').value.trim();
+            
+            if (!user || !pass) { alert("帳號和密碼都要填寫喔！"); return; }
+            if (isRegisterMode && !chosenRole) { alert("註冊新帳號必須選擇一個職務！"); return; }
+
+            const userRef = db.ref('users/' + user);
+            const snapshot = await userRef.once('value');
+
+            if (isRegisterMode) {
+                // 執行註冊邏輯
+                if (snapshot.exists()) { alert("這個帳號已經有人註冊過了，換一個名字吧！"); return; }
+                
+                let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+                const initialData = {
+                    pass: pass,
+                    name: user,
+                    role: chosenRole,
+                    color: randomColor,
+                    ap: 50,
+                    snack: 100
+                };
+                
+                await userRef.set(initialData);
+                alert("🎉 註冊成功！系統將自動為您登入。");
+                isRegisterMode = false; // 註冊完轉為登入成功的狀態
+                loginSuccess(user, initialData);
+            } else {
+                // 執行登入邏輯
+                if (!snapshot.exists()) { alert("找不到這個帳號，請檢查是否打錯，或先切換到註冊！"); return; }
+                
+                const userData = snapshot.val();
+                if (userData.pass !== pass) { alert("密碼錯誤！請重新輸入。"); return; }
+                
+                loginSuccess(user, userData);
+            }
+        }
+
+        // 登入成功後的初始化
+        function loginSuccess(username, userData) {
+            myId = username;
+            myColor = userData.color;
+            myLocalState = {
+                name: userData.name,
+                role: userData.role,
+                ap: userData.ap || 50,
+                snack: userData.snack || 100
+            };
+
+            document.getElementById('login-modal').style.display = 'none';
+            document.getElementById('player-name-tag').textContent = myLocalState.name;
+            document.getElementById('role-tag').textContent = roleNames[myLocalState.role];
+
+            // 存入本地 LocalStorage 讓網頁記得此瀏覽器這一次的登入狀態
+            localStorage.setItem('logged_in_user', myId);
+            localStorage.setItem('logged_in_pass', userData.pass);
+
+            syncOnlineStatus();
+            listenToFirebase();
+            updateUI();
+            updateLog(`🔒 帳密驗證成功！歡迎回來，${myLocalState.name}！`);
+        }
+
+        // 檢查瀏覽器上次是否已經登入過
+        async function checkSession() {
+            let savedUser = localStorage.getItem('logged_in_user');
+            let savedPass = localStorage.getItem('logged_in_pass');
+            if (savedUser && savedPass) {
+                const snapshot = await db.ref('users/' + savedUser).once('value');
+                if (snapshot.exists() && snapshot.val().pass === savedPass) {
+                    loginSuccess(savedUser, snapshot.val());
+                    return;
+                }
+            }
+            // 如果沒登入過，就把彈窗打開
+            document.getElementById('login-modal').style.display = 'flex';
+        }
+
+        function saveToCloud() {
+            if (!myId) return;
+            db.ref('users/' + myId + '/ap').set(myLocalState.ap);
+            db.ref('users/' + myId + '/snack').set(myLocalState.snack);
+        }
+
+        function syncOnlineStatus() {
+            db.ref('players/' + myId).set({
+                name: myLocalState.name, role: myLocalState.role, color: myColor, lastSeen: Date.now()
+            });
+            db.ref('players/' + myId).onDisconnect().remove();
+        }
+
+        function listenToFirebase() {
+            db.ref('global_map').on('value', (snapshot) => {
+                const mapData = snapshot.val() || {};
+                renderMapOccupied(mapData);
+                calculateLeaderboard(mapData);
+            });
+
+            db.ref('players').on('value', (snapshot) => {
+                globalPlayers = snapshot.val() || {};
+            });
+
+            db.ref('chat').limitToLast(30).on('value', (snapshot) => {
+                const chatData = snapshot.val() || {};
+                const chatBox = document.getElementById('chat-messages');
+                chatBox.innerHTML = "";
+                for (let cid in chatData) {
+                    let msg = chatData[cid];
+                    chatBox.innerHTML += `<div><strong style="color:${msg.color}">${msg.name}</strong>: ${msg.text}</div>`;
+                }
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+
+            db.ref('server_time').on('value', (snapshot) => {
+                const timeData = snapshot.val() || { mode: "上課", timeLeft: 30 };
+                currentGameMode = timeData.mode;
+                const banner = document.getElementById('clock-banner');
+                if (currentGameMode === "下課") {
+                    banner.innerHTML = `🏃‍♂️💨 【下課時間】 鐘聲響起！大家衝啊！ 剩餘 ${timeData.timeLeft} 秒 (AP 恢復速度翻倍)`;
+                    banner.style.backgroundColor = "#55efc4"; banner.style.color = "#00b894";
+                } else {
+                    banner.innerHTML = `👨‍🏫 【上課時間】 老師在台上講課... 剩餘 ${timeData.timeLeft} 秒 (請低調劃線，回魔極慢)`;
+                    banner.style.backgroundColor = "#ffeaa7"; banner.style.color = "#d35400";
+                }
+            });
+        }
+
+        function handleTileClick(x, y) {
+            if (!myId) return;
+            const tileKey = `${x}_${y}`;
+            const terrain = mapTileTypes[tileKey];
+
+            db.ref('global_map/' + tileKey).once('value', (snapshot) => {
+                const currentOwner = snapshot.val();
+                if (currentOwner && currentOwner.ownerId === myId) return;
+
+                let apCost = 5;
+                if (terrain === "playground" && myLocalState.role !== "sports") apCost = 12;
+                if (currentOwner) apCost = (myLocalState.role === "discipline") ? 6 : 10; 
+
+                if (myLocalState.ap < apCost) { updateLog(`❌ AP不足！需要 ${apCost} 點AP。`); return; }
+
+                myLocalState.ap -= apCost;
+
+                let myTiles = document.querySelectorAll('.tile.occupied');
+                let hasShopBuff = Array.from(myTiles).some(el => mapTileTypes[`${el.dataset.x}_${el.dataset.y}`] === 'shop');
+                myLocalState.snack += (terrain === "shop" || hasShopBuff) ? 25 : 10;
+
+                db.ref('global_map/' + tileKey).set({
+                    ownerId: myId, ownerName: myLocalState.name, color: myColor
+                });
+                
+                updateUI();
+                saveToCloud(); 
+            });
+        }
+
+        function renderMapOccupied(mapData) {
+            const allTiles = document.querySelectorAll('.tile');
+            allTiles.forEach(tile => {
+                tile.classList.remove('occupied'); tile.style.backgroundColor = ""; tile.textContent = "";
+                let terrain = mapTileTypes[`${tile.dataset.x}_${tile.dataset.y}`];
+                if (terrain === 'shop') tile.textContent = "🏪";
+                if (terrain === 'office') tile.textContent = "🚰";
+                if (terrain === 'playground') tile.textContent = "操";
+            });
+
+            for (let tileKey in mapData) {
+                const [x, y] = tileKey.split('_').map(Number);
+                const tileEl = document.querySelector(`[data-x='${x}'][data-y='${y}']`);
+                if (tileEl) {
+                    const data = mapData[tileKey];
+                    tileEl.classList.add('occupied');
+                    tileEl.style.backgroundColor = data.color;
+                    tileEl.textContent = data.ownerName;
+                }
+            }
+        }
+
+        function calculateLeaderboard(mapData) {
+            let counts = {};
+            for (let key in mapData) {
+                let owner = mapData[key].ownerName;
+                let color = mapData[key].color;
+                if (!counts[owner]) counts[owner] = { score: 0, color: color };
+                counts[owner].score++;
+            }
+            let sorted = Object.keys(counts).map(name => ({ name: name, ...counts[name] })).sort((a,b) => b.score - a.score);
+            const board = document.getElementById('leaderboard');
+            board.innerHTML = "";
+            sorted.slice(0, 5).forEach((p, index) => {
+                board.innerHTML += `<div class="item-row"><span style="color:${p.color}">第${index+1}名: ${p.name}</span><strong>${p.score}格</strong></div>`;
+            });
+        }
+
+        function sendChatMessage() {
+            if(!myId) return;
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if(!text) return;
+            db.ref('chat').push({ name: myLocalState.name, text: text, color: myColor, time: Date.now() });
+            input.value = "";
+        }
+
+        function sendQuickChat(text) {
+            if(!myId) return;
+            db.ref('chat').push({ name: myLocalState.name, text: text, color: myColor, time: Date.now() });
+        }
+
+        function updateUI() {
+            document.getElementById('ap-value').textContent = myLocalState.ap;
+            document.getElementById('snack-value').textContent = myLocalState.snack;
+        }
+
+        function updateLog(msg) { document.getElementById('log').textContent = "系統提示：" + msg; }
+
+        function logout() {
+            if(confirm("確定要登出當前帳號嗎？")) {
+                if (myId) db.ref('players/' + myId).remove(); // 從在線名單移除
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function initMap() {
+            generateTerrainSeeds();
+            const mapElement = document.getElementById('map');
+            mapElement.innerHTML = ""; 
+            for (let y = 0; y < MAP_SIZE; y++) {
+                for (let x = 0; x < MAP_SIZE; x++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    tile.setAttribute('data-x', x);
+                    tile.setAttribute('data-y', y);
+                    const terrain = mapTileTypes[`${x}_${y}`];
+                    if (terrain !== "corridor") tile.classList.add(terrain);
+                    tile.addEventListener('click', () => handleTileClick(x, y));
+                    mapElement.appendChild(tile);
+                }
+            }
+        }
+
+        // 🚀 啟動
+        initMap();  
+        checkSession(); // 自動檢查上次的登入狀態
+
+        // ⏱️ 遊戲主計時器
+        let apTickCounter = 0;
+        setInterval(() => {
+            if (!myId) return;
+
+            let myTiles = document.querySelectorAll('.tile.occupied');
+            let hasOfficeBuff = Array.from(myTiles).some(el => mapTileTypes[`${el.dataset.x}_${el.dataset.y}`] === 'office');
+
+            apTickCounter++;
+            if (currentGameMode === "下課") {
+                myLocalState.ap = Math.min(myLocalState.ap + (hasOfficeBuff ? 3 : 2), 100);
+            } else {
+                let rate = hasOfficeBuff ? 2 : 3;
+                if (apTickCounter % rate === 0) {
+                    myLocalState.ap = Math.min(myLocalState.ap + 1, 100);
+                }
+            }
+
+            if (myLocalState.role === 'hygiene') myLocalState.snack += 1;
+            
+            updateUI();
+            
+            // 每 5 秒定時將 AP 零食寫回雲端該帳號底下
+            if (apTickCounter % 5 === 0) saveToCloud();
+        }, 1000);
+
+        // 課堂時間伺服器計時
+        setInterval(() => {
+            if (!myId) return;
+            db.ref('server_time').once('value', (snapshot) => {
+                let timeData = snapshot.val() || { mode: "上課", timeLeft: 40, hostId: myId };
+                if (!timeData.hostId || timeData.hostId === myId || !globalPlayers[timeData.hostId]) {
+                    timeData.timeLeft--;
+                    timeData.hostId = myId;
+                    if (timeData.timeLeft <= 0) {
+                        timeData.mode = (timeData.mode === "上課") ? "下課" : "上課";
+                        timeData.timeLeft = (timeData.mode === "下課") ? 50 : 40;
+                    }
+                    db.ref('server_time').set(timeData);
+                }
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
+
