@@ -111,14 +111,23 @@
             alert(`已切換為【${targetMode}】`);
         }
 
-        // 2. 修改玩家數值（改為直接覆蓋成超級數字）
+        // 2. 修改玩家數值（安全加法版：點一下就加 1000）
         function adjustStat(type, amount) {
             const player = document.getElementById('target-player').value.trim();
             if(!player) { alert("請輸入玩家暱稱！"); return; }
             
-            db.ref('users/' + player + '/' + type).set(amount);
-            alert(`🧙‍♂️ 神蹟顯靈！已將 ${player} 的 ${type.toUpperCase()} 直接設定為 ${amount}！`);
+            // 先去資料庫抓他原本有多少錢
+            db.ref('users/' + player + '/' + type).once('value').then((snapshot) => {
+                // 如果他原本沒錢或資料不存在，就當作 0，然後加上這次的金額
+                const current = Number(snapshot.val()) || 0; 
+                const total = current + amount;
+                
+                // 把加完的總數寫回資料庫
+                db.ref('users/' + player + '/' + type).set(total);
+                alert(`🧙‍♂️ 神蹟顯靈！已幫 ${player} 的 ${type.toUpperCase()} 增加了 ${amount}（目前總共: ${total}）！`);
+            });
         }
+
 
         // 歸零玩家
         function resetPlayer() {
