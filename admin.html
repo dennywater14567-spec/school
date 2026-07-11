@@ -60,7 +60,7 @@
 
             <!-- 3. 全服大聲公 -->
             <div class="section">
-                <h3>📢 創世神降臨廣播</h3>
+                <h3>📢 創世神降臨廣广播</h3>
                 <input type="text" id="broadcast-msg" placeholder="輸入你想對全校公告的話...">
                 <button class="btn-green" onclick="sendBroadcast()" style="width: 100%;">⚡ 發送全服跑馬燈</button>
             </div>
@@ -111,16 +111,13 @@
             alert(`已切換為【${targetMode}】`);
         }
 
-        // 2. 修改玩家數值
+        // 2. 修改玩家數值（改為直接覆蓋成超級數字）
         function adjustStat(type, amount) {
             const player = document.getElementById('target-player').value.trim();
             if(!player) { alert("請輸入玩家暱稱！"); return; }
             
-            const userRef = db.ref('users/' + player + '/' + type);
-            userRef.transaction((currentValue) => {
-                return (currentValue || 0) + amount;
-            });
-            alert(`已成功幫 ${player} 的 ${type.toUpperCase()} 增加了 ${amount}！`);
+            db.ref('users/' + player + '/' + type).set(amount);
+            alert(`🧙‍♂️ 神蹟顯靈！已將 ${player} 的 ${type.toUpperCase()} 直接設定為 ${amount}！`);
         }
 
         // 歸零玩家
