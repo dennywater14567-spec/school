@@ -3,23 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台灣小學大戰 - GM 終極總管理處</title>
+    <title>台灣小學大戰 - GM 創世神主控台 v2.0</title>
     <style>
-        body { font-family: sans-serif; background-color: #1a252f; color: white; padding: 20px; text-align: center; }
-        .container { max-width: 600px; margin: 0 auto; background: #2c3e50; padding: 25px; border-radius: 12px; box-shadow: 0 6px 15px rgba(0,0,0,0.4); }
-        h1 { color: #f1c40f; font-size: 26px; margin-bottom: 5px; }
-        .subtitle { color: #bdc3c7; font-size: 14px; margin-bottom: 25px; }
-        .section { border: 1px solid #34495e; background: #34495e; border-radius: 8px; padding: 15px; margin-bottom: 15px; text-align: left; }
-        .section h3 { margin-top: 0; color: #3498db; border-bottom: 2px solid #2980b9; padding-bottom: 5px; }
-        button { background: #e74c3c; color: white; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; margin: 5px 2px; }
-        button:hover { background: #c0392b; }
-        .btn-green { background: #2ecc71; }
-        .btn-green:hover { background: #27ae60; }
-        .btn-blue { background: #3498db; }
-        .btn-blue:hover { background: #2980b9; }
-        input { padding: 10px; border-radius: 6px; border: none; margin: 5px 0; width: 95%; background: #ecf0f1; color: #2c3e50; font-weight: bold; }
-        .flex-row { display: flex; gap: 10px; }
+        body { font-family: sans-serif; background-color: #111827; color: #f3f4f6; padding: 20px; text-align: center; }
+        .container { max-width: 650px; margin: 0 auto; background: #1f2937; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #374151; }
+        h1 { color: #f59e0b; font-size: 28px; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .subtitle { color: #9ca3af; font-size: 14px; margin-bottom: 25px; letter-spacing: 1px; }
+        .section { border: 1px solid #4b5563; background: #111827; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: left; }
+        .section h3 { margin-top: 0; color: #3b82f6; border-bottom: 2px solid #2563eb; padding-bottom: 8px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+        button { background: #ef4444; color: white; border: none; padding: 12px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; margin: 5px 2px; transition: all 0.2s; font-size: 14px; }
+        button:hover { background: #dc2626; transform: translateY(-1px); }
+        .btn-green { background: #10b981; }
+        .btn-green:hover { background: #059669; }
+        .btn-blue { background: #3b82f6; }
+        .btn-blue:hover { background: #2563eb; }
+        .btn-purple { background: #8b5cf6; }
+        .btn-purple:hover { background: #7c3aed; }
+        select, input { padding: 12px; border-radius: 8px; border: 1px solid #4b5563; margin: 8px 0; width: 100%; background: #1f2937; color: white; font-weight: bold; box-sizing: border-box; font-size: 15px; }
+        select { color: #f59e0b; cursor: pointer; }
+        .flex-row { display: flex; gap: 12px; align-items: center; }
         #admin-box { display: none; }
+        .badge { background: #374151; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #9ca3af; margin-left: auto; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -27,38 +31,52 @@
 <body>
 
     <div class="container">
-        <h1>🕵️‍♂️ 3年2班 終極主控台</h1>
-        <div class="subtitle">權限等級：最高創世神 (GM Mode)</div>
+        <h1>⚡ 3年2班 創世神主控台 <span style="font-size: 14px; color:#ef4444;">v2.0</span></h1>
+        <div class="subtitle">權限角色：最高階級總管理員 (正式資安架構)</div>
         
         <!-- 🔐 密碼驗證區 -->
         <div id="auth-box">
             <p>請輸入管理員終極密碼：</p>
-            <input type="password" id="gm-pass" placeholder="輸入密碼">
-            <button class="btn-green" onclick="verifyGM()" style="width: 100%; margin-top: 10px;">登入控制台</button>
+            <input type="password" id="gm-pass" placeholder="••••••••" style="text-align: center; letter-spacing: 4px;">
+            <button class="btn-green" onclick="verifyGM()" style="width: 100%; margin-top: 10px; font-size: 16px;">解鎖神力控制台</button>
         </div>
 
         <!-- 🎛️ 核心控制區 -->
         <div id="admin-box">
             
-            <!-- 1. 時間掌控者 -->
+            <!-- 1. 時間與秩序 -->
             <div class="section">
                 <h3>🕒 時間與鐘聲控制</h3>
-                <button class="btn-green" onclick="changeMode('上課')">👨‍🏫 強制切換【上課】</button>
-                <button class="btn-green" onclick="changeMode('下課')">🏃‍♂️ 強制切換【下課】</button>
-            </div>
-
-            <!-- 2. 神之恩賜（修改玩家資料） -->
-            <div class="section">
-                <h3>🎁 玩家物資補給 / 處罰</h3>
-                <input type="text" id="target-player" placeholder="請輸入目標玩家精確暱稱">
                 <div class="flex-row">
-                    <button class="btn-blue" onclick="adjustStat('snack', 1000)" style="flex: 1;">🍪 賞賜 +1000 零食</button>
-                    <button class="btn-blue" onclick="adjustStat('ap', 100)" style="flex: 1;">⚡ 補滿 100 AP</button>
+                    <button class="btn-green" onclick="changeMode('上課')" style="flex: 1;">👨‍🏫 強制切換【上課】</button>
+                    <button class="btn-green" onclick="changeMode('下課')" style="flex: 1;">🏃‍♂️ 強制切換【下課】</button>
                 </div>
-                <button onclick="resetPlayer()" style="width: 100%; background: #95a5a6;">🗑️ 歸零該玩家財產</button>
             </div>
 
-            <!-- 3. 全服大聲公 -->
+            <!-- 2. 全自動玩家物資控制面板 -->
+            <div class="section">
+                <h3>🎁 智慧玩家物資更改面板</h3>
+                <label style="font-size: 13px; color: #9ca3af;">🎯 第一步：選擇目標玩家（系統已自動同步雲端名單）</label>
+                <select id="player-select">
+                    <option value="">-- 請選擇在線玩家 --</option>
+                </select>
+
+                <label style="font-size: 13px; color: #9ca3af; margin-top: 10px; display: block;">💰 第二步：設定更改數量（例如輸入 1000 或 50）</label>
+                <input type="number" id="stat-amount" value="1000" placeholder="請輸入數量">
+
+                <label style="font-size: 13px; color: #9ca3af; margin-top: 10px; display: block;">⚡ 第三步：選擇你要執行的神蹟</label>
+                <div class="flex-row" style="margin-top: 5px;">
+                    <button class="btn-blue" onclick="modifyStat('snack', 'add')" style="flex: 1;">🍪 零食 往上加 (+)</button>
+                    <button class="btn-purple" onclick="modifyStat('snack', 'set')" style="flex: 1;">🎯 零食 直接設 (=)</button>
+                </div>
+                <div class="flex-row" style="margin-top: 5px;">
+                    <button class="btn-blue" onclick="modifyStat('ap', 'add')" style="flex: 1;">⚡ AP 往上加 (+)</button>
+                    <button class="btn-purple" onclick="modifyStat('ap', 'set')" style="flex: 1;">🎯 AP 直接設 (=)</button>
+                </div>
+                <button onclick="resetPlayer()" style="width: 100%; background: #4b5563; margin-top: 12px; color: #f3f4f6;">🗑️ 沒收財產 (歸零該玩家數值)</button>
+            </div>
+
+            <!-- 3. 全服公告 -->
             <div class="section">
                 <h3>📢 創世神降臨廣播</h3>
                 <input type="text" id="broadcast-msg" placeholder="輸入你想對全校公告的話...">
@@ -69,8 +87,10 @@
             <div class="section">
                 <h3>💣 天罰與秩序系統</h3>
                 <input type="text" id="tile-coord" placeholder="輸入地圖座標 (例如: 12_15)">
-                <button onclick="wipeTile()">💥 炸毀此格子</button>
-                <button onclick="clearChat()">🧹 擦黑板 (清空聊天)</button>
+                <div class="flex-row">
+                    <button onclick="wipeTile()" style="flex: 1;">💥 炸毀此格子</button>
+                    <button onclick="clearChat()" style="flex: 1; background: #6b7280;">🧹 擦黑板 (清空聊天)</button>
+                </div>
                 <button onclick="wipeAllMap()" style="background: #962d22; width: 100%; margin-top: 10px;">🔥 毀天滅地 (清空全地圖)</button>
             </div>
 
@@ -80,29 +100,47 @@
                 <input type="text" id="ban-player" placeholder="輸入要封鎖的作弊玩家暱稱">
                 <button onclick="banUser()" style="width: 100%;">🔒 限制登入 (Ban)</button>
             </div>
-
-            <p style="color: #e74c3c; font-size: 11px; margin-top: 20px; font-weight: bold;">⚠️ 警告：神力強大，請勿在同學面前隨意展示，以免引起暴動。</p>
         </div>
     </div>
 
     <script>
         // Firebase 設定
         const firebaseConfig = {
-            databaseURL: "https://taiwan-school-war-default-rtdb.europe-west1.firebasedatabase.app/"
+            databaseURL: "https://taiwan-school-war-default-rtdb.europe-west1.firebasedatabase.app/server_time"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 登入驗證（獨立密碼，保證可以順利進入）
+        // 登入驗證與玩家名單自動同步
         function verifyGM() {
             const input = document.getElementById('gm-pass').value;
             if (input === "admin321") {
                 document.getElementById('auth-box').style.display = 'none';
                 document.getElementById('admin-box').style.display = 'block';
-                alert("🔮 創世神權限已解鎖！");
+                alert("🔮 創世神權限已解鎖！正在同步在線玩家名單...");
+                loadPlayerList(); // 登入成功，立刻去抓玩家名單
             } else {
                 alert("❌ 密碼錯誤！");
             }
+        }
+
+        // 核心：動態抓取 Firebase 的所有玩家名字，並塞進下拉選單
+        function loadPlayerList() {
+            db.ref('users').on('value', (snapshot) => {
+                const select = document.getElementById('player-select');
+                // 保留第一行提示，清空舊名單
+                select.innerHTML = '<option value="">-- 請選擇在線玩家 --</option>'; 
+                
+                if (snapshot.exists()) {
+                    snapshot.forEach((childSnapshot) => {
+                        const playerName = childSnapshot.key;
+                        const option = document.createElement('option');
+                        option.value = playerName;
+                        option.textContent = `👤 ${playerName}`;
+                        select.appendChild(option);
+                    });
+                }
+            });
         }
 
         // 1. 修改時間
@@ -111,30 +149,35 @@
             alert(`已切換為【${targetMode}】`);
         }
 
-        // 2. 修改玩家數值（安全加法版：每次點擊就往上加）
-        function adjustStat(type, amount) {
-            const player = document.getElementById('target-player').value.trim();
-            if(!player) { alert("請輸入玩家暱稱！"); return; }
+        // 2. 超進化物資控制面板邏輯（支援加法與直接覆蓋）
+        function modifyStat(type, method) {
+            const player = document.getElementById('player-select').value;
+            const amountInput = document.getElementById('stat-amount').value;
             
-            // 1. 先去雲端撈這名玩家原本有多少數值
-            db.ref('users/' + player + '/' + type).once('value').then((snapshot) => {
-                // 2. 把撈出來的資料強制轉成「數字」，如果是空的就當作 0
-                const current = Number(snapshot.val()) || 0; 
-                // 3. 做加法（原本的金額 + 這次要給的 1000）
-                const total = current + amount;
-                
-                // 4. 把加好的總金額送回 Firebase
-                db.ref('users/' + player + '/' + type).set(total);
-                alert(`🧙‍♂️ 神蹟顯靈！已幫 ${player} 的 ${type.toUpperCase()} 增加了 ${amount}！(目前總共: ${total})`);
-            }).catch((error) => {
-                alert("📡 連線失敗，找不到該玩家的資料。");
-            });
+            if(!player) { alert("❌ 請先在下拉選單選取一名玩家！"); return; }
+            if(!amountInput || isNaN(amountInput)) { alert("❌ 請輸入有效的更改數量！"); return; }
+            
+            const val = Number(amountInput);
+
+            if (method === 'set') {
+                // 直接覆蓋值 (=)
+                db.ref('users/' + player + '/' + type).set(val);
+                alert(`🧙‍♂️ 神蹟顯靈！已將 ${player} 的 ${type.toUpperCase()} 直接覆蓋設定為 ${val}！`);
+            } else if (method === 'add') {
+                // 往上累加 (+)
+                db.ref('users/' + player + '/' + type).once('value').then((snapshot) => {
+                    const current = Number(snapshot.val()) || 0;
+                    const total = current + val;
+                    db.ref('users/' + player + '/' + type).set(total);
+                    alert(`🧙‍♂️ 神蹟顯靈！已幫 ${player} 的 ${type.toUpperCase()} 增加了 ${val}！(目前總共: ${total})`);
+                });
+            }
         }
 
         // 歸零玩家
         function resetPlayer() {
-            const player = document.getElementById('target-player').value.trim();
-            if(!player) return;
+            const player = document.getElementById('player-select').value;
+            if(!player) { alert("❌ 請先選取玩家！"); return; }
             if(confirm(`確定要沒收 ${player} 的所有財產嗎？`)) {
                 db.ref('users/' + player).set({ snack: 0, ap: 0, role: "未選擇" });
                 alert(`${player} 已變成破產平民。`);
