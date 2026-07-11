@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>九年一貫：校園割據戰</title>
+    <title>台灣小學大戰 - 課後福利社版</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -39,7 +39,6 @@
         #role-tag { background: #34495e; color: white; padding: 2px 8px; border-radius: 4px; }
         #player-name-tag { background: #e67e22; color: white; padding: 2px 8px; border-radius: 4px; }
         .logout-btn { background-color: #95a5a6; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .logout-btn:hover { background-color: #c0392b; }
 
         /* 頂部鐘聲跑馬燈 */
         .event-banner {
@@ -49,20 +48,26 @@
         }
 
         /* 遊戲面板 */
-        .game-layout { display: flex; gap: 15px; width: 95vw; height: 55vh; }
+        .game-layout { display: flex; gap: 15px; width: 95vw; height: 58vh; }
         .map-container { flex: 3; overflow: auto; border: 3px solid #34495e; border-radius: 8px; background-color: #bdc3c7; }
         .grid-map { display: grid; grid-template-columns: repeat(50, 30px); grid-template-rows: repeat(50, 30px); gap: 1px; background-color: #7f8c8d; width: fit-content; }
         
-        .sidebar { flex: 1; display: flex; flex-direction: column; gap: 10px; height: 100%; min-width: 220px; max-width: 300px; }
+        .sidebar { flex: 1.2; display: flex; flex-direction: column; gap: 10px; height: 100%; min-width: 240px; max-width: 320px; }
         .panel { background: white; border-radius: 8px; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden;}
         .panel h3 { margin-top: 0; margin-bottom: 8px; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; font-size: 13px;}
 
+        /* 福利社商店特有樣式 */
+        .shop-item { display: flex; justify-content: space-between; align-items: center; padding: 6px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; margin-bottom: 5px; font-size: 12px;}
+        .buy-btn { background: #e67e22; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: bold;}
+        .buy-btn:hover { background: #d35400; }
+        #buff-status { font-size: 11px; color: #27ae60; font-weight: bold; margin-top: 2px; }
+
         /* 排行榜與在線名單 */
-        .list-container { flex: 1; overflow-y: auto; font-size: 12px; }
+        .list-container { flex: 1; overflow-y: auto; font-size: 12px; min-height: 70px; }
         .item-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #f1f2f6; }
 
         /* 聊天室樣式 */
-        .chat-box { flex: 1.5; display: flex; flex-direction: column; height: 160px; }
+        .chat-box { flex: 1.2; display: flex; flex-direction: column; min-height: 130px; }
         .chat-messages { flex: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px; background: #fafafa; font-size: 11px; margin-bottom: 5px; }
         .chat-input-area { display: flex; gap: 5px; }
         .chat-input-area input { flex: 1; padding: 4px; font-size: 12px; }
@@ -74,28 +79,23 @@
         .tile.shop { background-color: #ffeaa7; }
         .tile.office { background-color: #ff7675; }
         .tile.playground { background-color: #55efc4; }
-
-        /* 連線佔領 */
         .tile.occupied { border: 2px dashed #ffffff !important; font-weight: bold; color: white;}
 
         .log-box { margin-top: 10px; color: #2c3e50; font-size: 13px; font-weight: bold; background: #fff; padding: 10px; border-left: 5px solid #34495e; width: 92vw; text-align: center; box-sizing: border-box;}
     </style>
 
-    <!-- 載入 Firebase SDK 核心庫 -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
-    <!-- 🔒 整合版登入/註冊複合彈窗 -->
+    <!-- 🔒 登入/註冊複合彈窗 -->
     <div id="login-modal">
         <div class="modal-content">
             <h2 id="modal-title">🎒 登入 3年2班 線上系統</h2>
-            
             <input type="text" id="username-input" class="auth-input" placeholder="輸入你的專屬帳號/綽號" maxlength="8">
             <input type="password" id="password-input" class="auth-input" placeholder="輸入密碼">
             
-            <!-- 註冊時才會顯示的職務選擇區 -->
             <div id="role-selection" class="hidden">
                 <p style="font-size: 13px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px;">請選擇你的開局職務：</p>
                 <button class="role-btn" style="color: #2980b9;" onclick="selectRole('discipline')">🕵️‍♂️ 風紀股長 (擦格子便宜)</button>
@@ -103,16 +103,13 @@
                 <button class="role-btn" style="color: #f39c12;" onclick="selectRole('hygiene')">🧹 衛生股長 (自動產零食)</button>
                 <p id="selected-role-text" style="font-size: 12px; color: #e67e22; font-weight: bold; margin: 5px 0;"></p>
             </div>
-
             <button id="submit-auth-btn" class="submit-btn" onclick="handleAuth()">安全登入</button>
-            
             <div id="switch-mode-btn" class="switch-mode-text" onclick="toggleAuthMode()">還沒有帳號？點此切換到【註冊新角色】</div>
         </div>
     </div>
 
-    <h1>九年一貫：校園割據戰</h1>
+    <h1>台灣小學大戰 - 🏪 瘋狂福利社道具版</h1>
 
-    <!-- 頂部即時鐘聲系統 -->
     <div class="event-banner" id="clock-banner">🔔 正在同步全校課堂鐘聲中...</div>
 
     <!-- 狀態列 -->
@@ -131,15 +128,29 @@
         </div>
 
         <div class="sidebar">
-            <!-- 實時排行榜 -->
+            <!-- 🏪 新增福利社商店面板 -->
+            <div class="panel">
+                <h3>🏪 學校福利社 (阿姨的祕密基地)</h3>
+                <div class="shop-item">
+                    <div><strong>🎨 💡 雙面膠</strong><br><span style="color:#7f8c8d; font-size:10px;">下3次劃線只需 1 AP</span></div>
+                    <button class="buy-btn" onclick="buyItem('tape')">🍪 50</button>
+                </div>
+                <div class="shop-item">
+                    <div><strong>🧹 💣 大掃把</strong><br><span style="color:#7f8c8d; font-size:10px;">立刻清除隨機 5 格敵軍</span></div>
+                    <button class="buy-btn" onclick="buyItem('broom')">🍪 120</button>
+                </div>
+                <div id="buff-status">目前無道具效果</div>
+            </div>
+
+            <!-- 排行榜 -->
             <div class="panel" style="flex: 1;">
                 <h3>🏆 班級領土排行榜</h3>
                 <div id="leaderboard" class="list-container"></div>
             </div>
 
-            <!-- 即時聊天室 -->
+            <!-- 聊天室 -->
             <div class="panel chat-box">
-                <h3>💬 同學有話直說 (即時聊天)</h3>
+                <h3>💬 同學有話直說</h3>
                 <div id="chat-messages" class="chat-messages"></div>
                 <div class="chat-input-area">
                     <input type="text" id="chat-input" placeholder="說點什麼..." maxlength="30" onkeydown="if(event.key==='Enter') sendChatMessage()">
@@ -148,16 +159,14 @@
                 <div>
                     <button class="quick-chat-btn" onclick="sendQuickChat('我要去告老師喔！')">🤬 告老師</button>
                     <button class="quick-chat-btn" onclick="sendQuickChat('超過這條線就是我的！')">📐 超過這條線</button>
-                    <button class="quick-chat-btn" onclick="sendQuickChat('科學麵分我一口啦')">🍗 分一口</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="log-box" id="log">系統提示：請輸入帳號密碼以連接雲端數據。</div>
+    <div class="log-box" id="log">系統提示：歡迎光臨，請登入以開始遊戲。</div>
 
     <script>
-        // 🛠️ Firebase 配置區 
         const firebaseConfig = {
             databaseURL: "https://taiwan-school-war-default-rtdb.europe-west1.firebasedatabase.app/" 
         };
@@ -165,14 +174,13 @@
         const db = firebase.database();
 
         const MAP_SIZE = 50;
-        
         let isRegisterMode = false;
-        let chosenRole = ""; // 註冊時暫存的職務
-        
-        let myId = ""; // 登入成功後會變成玩家的帳號
+        let chosenRole = "";
+        let myId = ""; 
         let myColor = ""; 
 
         let myLocalState = { name: "", role: "", ap: 50, snack: 100 };
+        let tapeCount = 0; // 雙面膠剩餘使用次數
         let currentGameMode = "上課"; 
         let mapTileTypes = {}; 
         let globalPlayers = {};
@@ -190,7 +198,6 @@
             }
         }
 
-        // 切換 登入 / 註冊 介面
         function toggleAuthMode() {
             isRegisterMode = !isRegisterMode;
             document.getElementById('modal-title').textContent = isRegisterMode ? "🎒 註冊 3年2班 全新帳號" : "🎒 登入 3年2班 線上系統";
@@ -206,72 +213,49 @@
             document.getElementById('selected-role-text').textContent = `已選擇職務：${roleNames[roleKey]}`;
         }
 
-        // 🔒 處理登入與註冊核心驗證
         async function handleAuth() {
             const user = document.getElementById('username-input').value.trim();
             const pass = document.getElementById('password-input').value.trim();
-            
-            if (!user || !pass) { alert("帳號和密碼都要填寫喔！"); return; }
+            if (!user || !pass) { alert("帳號密碼都要填寫喔！"); return; }
             if (isRegisterMode && !chosenRole) { alert("註冊新帳號必須選擇一個職務！"); return; }
 
             const userRef = db.ref('users/' + user);
             const snapshot = await userRef.once('value');
 
             if (isRegisterMode) {
-                // 執行註冊邏輯
-                if (snapshot.exists()) { alert("這個帳號已經有人註冊過了，換一個名字吧！"); return; }
-                
+                if (snapshot.exists()) { alert("這個帳號已經有人註冊過了！"); return; }
                 let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
-                const initialData = {
-                    pass: pass,
-                    name: user,
-                    role: chosenRole,
-                    color: randomColor,
-                    ap: 50,
-                    snack: 100
-                };
-                
+                const initialData = { pass, name: user, role: chosenRole, color: randomColor, ap: 50, snack: 100 };
                 await userRef.set(initialData);
                 alert("🎉 註冊成功！系統將自動為您登入。");
-                isRegisterMode = false; // 註冊完轉為登入成功的狀態
+                isRegisterMode = false;
                 loginSuccess(user, initialData);
             } else {
-                // 執行登入邏輯
-                if (!snapshot.exists()) { alert("找不到這個帳號，請檢查是否打錯，或先切換到註冊！"); return; }
-                
+                if (!snapshot.exists()) { alert("找不到這個帳號！"); return; }
                 const userData = snapshot.val();
-                if (userData.pass !== pass) { alert("密碼錯誤！請重新輸入。"); return; }
-                
+                if (userData.pass !== pass) { alert("密碼錯誤！"); return; }
                 loginSuccess(user, userData);
             }
         }
 
-        // 登入成功後的初始化
         function loginSuccess(username, userData) {
             myId = username;
             myColor = userData.color;
-            myLocalState = {
-                name: userData.name,
-                role: userData.role,
-                ap: userData.ap || 50,
-                snack: userData.snack || 100
-            };
+            myLocalState = { name: userData.name, role: userData.role, ap: userData.ap || 50, snack: userData.snack || 100 };
 
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('player-name-tag').textContent = myLocalState.name;
             document.getElementById('role-tag').textContent = roleNames[myLocalState.role];
 
-            // 存入本地 LocalStorage 讓網頁記得此瀏覽器這一次的登入狀態
             localStorage.setItem('logged_in_user', myId);
             localStorage.setItem('logged_in_pass', userData.pass);
 
             syncOnlineStatus();
             listenToFirebase();
             updateUI();
-            updateLog(`🔒 帳密驗證成功！歡迎回來，${myLocalState.name}！`);
+            updateLog(`🔒 歡迎回來，${myLocalState.name}！福利社今天有進新貨喔！`);
         }
 
-        // 檢查瀏覽器上次是否已經登入過
         async function checkSession() {
             let savedUser = localStorage.getItem('logged_in_user');
             let savedPass = localStorage.getItem('logged_in_pass');
@@ -282,7 +266,6 @@
                     return;
                 }
             }
-            // 如果沒登入過，就把彈窗打開
             document.getElementById('login-modal').style.display = 'flex';
         }
 
@@ -292,10 +275,97 @@
             db.ref('users/' + myId + '/snack').set(myLocalState.snack);
         }
 
-        function syncOnlineStatus() {
-            db.ref('players/' + myId).set({
-                name: myLocalState.name, role: myLocalState.role, color: myColor, lastSeen: Date.now()
+        // 🏪 福利社購買邏輯
+        function buyItem(itemType) {
+            if (!myId) return;
+            
+            if (itemType === 'tape') {
+                if (myLocalState.snack < 50) { alert("零食不夠！雙面膠需要 50 個零食。"); return; }
+                myLocalState.snack -= 50;
+                tapeCount += 3; // 獲得三次省AP Buff
+                updateLog("🎨 買了雙面膠！接下來 3 次劃線只要 1 點 AP！");
+            } 
+            else if (itemType === 'broom') {
+                if (myLocalState.snack < 120) { alert("零食不夠！大掃把需要 120 個零食。"); return; }
+                myLocalState.snack -= 120;
+                updateLog("🧹 揮舞大掃把！正在瘋狂清掃別人的領地...");
+                triggerBroomEffect();
+            }
+            
+            updateUI();
+            saveToCloud();
+        }
+
+        // 大掃把效果：隨機炸飛全地圖上 5 格不屬於自己的地盤
+        function triggerBroomEffect() {
+            db.ref('global_map').once('value', (snapshot) => {
+                const mapData = snapshot.val() || {};
+                let enemyTiles = Object.keys(mapData).filter(key => mapData[key].ownerId !== myId);
+                
+                if (enemyTiles.length === 0) {
+                    updateLog("🧹 掃把揮空了！目前地圖上沒有別人的地盤。");
+                    return;
+                }
+
+                // 隨機洗牌抽 5 格
+                enemyTiles.sort(() => 0.5 - Math.random());
+                let targets = enemyTiles.slice(0, 5);
+                
+                targets.forEach(tileKey => {
+                    db.ref('global_map/' + tileKey).remove();
+                });
+
+                db.ref('chat').push({ 
+                    name: "📢 福利社廣播", 
+                    text: `💥 【${myLocalState.name}】使用了大掃把，清掃了地圖上的 ${targets.length} 格領地！`, 
+                    color: "#e67e22" 
+                });
             });
+        }
+
+        function handleTileClick(x, y) {
+            if (!myId) return;
+            const tileKey = `${x}_${y}`;
+            const terrain = mapTileTypes[tileKey];
+
+            db.ref('global_map/' + tileKey).once('value', (snapshot) => {
+                const currentOwner = snapshot.val();
+                if (currentOwner && currentOwner.ownerId === myId) return;
+
+                // 計算 AP 花費
+                let apCost = 5;
+                if (terrain === "playground" && myLocalState.role !== "sports") apCost = 12;
+                if (currentOwner) apCost = (myLocalState.role === "discipline") ? 6 : 10; 
+
+                // 如果有雙面膠 Buff，強制只要 1 AP
+                if (tapeCount > 0) {
+                    apCost = 1;
+                }
+
+                if (myLocalState.ap < apCost) { updateLog(`❌ AP不足！需要 ${apCost} 點AP。`); return; }
+
+                myLocalState.ap -= apCost;
+
+                // 扣除雙面膠次數
+                if (tapeCount > 0) {
+                    tapeCount--;
+                }
+
+                let myTiles = document.querySelectorAll('.tile.occupied');
+                let hasShopBuff = Array.from(myTiles).some(el => mapTileTypes[`${el.dataset.x}_${el.dataset.y}`] === 'shop');
+                myLocalState.snack += (terrain === "shop" || hasShopBuff) ? 25 : 10;
+
+                db.ref('global_map/' + tileKey).set({
+                    ownerId: myId, ownerName: myLocalState.name, color: myColor
+                });
+                
+                updateUI();
+                saveToCloud(); 
+            });
+        }
+
+        function syncOnlineStatus() {
+            db.ref('players/' + myId).set({ name: myLocalState.name, role: myLocalState.role, color: myColor, lastSeen: Date.now() });
             db.ref('players/' + myId).onDisconnect().remove();
         }
 
@@ -306,9 +376,7 @@
                 calculateLeaderboard(mapData);
             });
 
-            db.ref('players').on('value', (snapshot) => {
-                globalPlayers = snapshot.val() || {};
-            });
+            db.ref('players').on('value', (snapshot) => { globalPlayers = snapshot.val() || {}; });
 
             db.ref('chat').limitToLast(30).on('value', (snapshot) => {
                 const chatData = snapshot.val() || {};
@@ -326,42 +394,12 @@
                 currentGameMode = timeData.mode;
                 const banner = document.getElementById('clock-banner');
                 if (currentGameMode === "下課") {
-                    banner.innerHTML = `🏃‍♂️💨 【下課時間】 鐘聲響起！大家衝啊！ 剩餘 ${timeData.timeLeft} 秒 (AP 恢復速度翻倍)`;
+                    banner.innerHTML = `🏃‍♂️💨 【下課時間】 鐘聲響起！大家衝啊！ 剩餘 ${timeData.timeLeft} 秒`;
                     banner.style.backgroundColor = "#55efc4"; banner.style.color = "#00b894";
                 } else {
-                    banner.innerHTML = `👨‍🏫 【上課時間】 老師在台上講課... 剩餘 ${timeData.timeLeft} 秒 (請低調劃線，回魔極慢)`;
+                    banner.innerHTML = `👨‍🏫 【上課時間】 老師在台上講課... 剩餘 ${timeData.timeLeft} 秒`;
                     banner.style.backgroundColor = "#ffeaa7"; banner.style.color = "#d35400";
                 }
-            });
-        }
-
-        function handleTileClick(x, y) {
-            if (!myId) return;
-            const tileKey = `${x}_${y}`;
-            const terrain = mapTileTypes[tileKey];
-
-            db.ref('global_map/' + tileKey).once('value', (snapshot) => {
-                const currentOwner = snapshot.val();
-                if (currentOwner && currentOwner.ownerId === myId) return;
-
-                let apCost = 5;
-                if (terrain === "playground" && myLocalState.role !== "sports") apCost = 12;
-                if (currentOwner) apCost = (myLocalState.role === "discipline") ? 6 : 10; 
-
-                if (myLocalState.ap < apCost) { updateLog(`❌ AP不足！需要 ${apCost} 點AP。`); return; }
-
-                myLocalState.ap -= apCost;
-
-                let myTiles = document.querySelectorAll('.tile.occupied');
-                let hasShopBuff = Array.from(myTiles).some(el => mapTileTypes[`${el.dataset.x}_${el.dataset.y}`] === 'shop');
-                myLocalState.snack += (terrain === "shop" || hasShopBuff) ? 25 : 10;
-
-                db.ref('global_map/' + tileKey).set({
-                    ownerId: myId, ownerName: myLocalState.name, color: myColor
-                });
-                
-                updateUI();
-                saveToCloud(); 
             });
         }
 
@@ -420,13 +458,22 @@
         function updateUI() {
             document.getElementById('ap-value').textContent = myLocalState.ap;
             document.getElementById('snack-value').textContent = myLocalState.snack;
+            
+            const buffStatus = document.getElementById('buff-status');
+            if (tapeCount > 0) {
+                buffStatus.textContent = `⚡ 雙面膠效果中：剩餘 ${tapeCount} 次劃線`;
+                buffStatus.style.color = "#e67e22";
+            } else {
+                buffStatus.textContent = "目前無道具效果";
+                buffStatus.style.color = "#27ae60";
+            }
         }
 
         function updateLog(msg) { document.getElementById('log').textContent = "系統提示：" + msg; }
 
         function logout() {
-            if(confirm("確定要登出當前帳號嗎？")) {
-                if (myId) db.ref('players/' + myId).remove(); // 從在線名單移除
+            if(confirm("確定要登出嗎？")) {
+                if (myId) db.ref('players/' + myId).remove();
                 localStorage.clear();
                 location.reload();
             }
@@ -450,11 +497,9 @@
             }
         }
 
-        // 🚀 啟動
         initMap();  
-        checkSession(); // 自動檢查上次的登入狀態
+        checkSession();
 
-        // ⏱️ 遊戲主計時器
         let apTickCounter = 0;
         setInterval(() => {
             if (!myId) return;
@@ -475,12 +520,9 @@
             if (myLocalState.role === 'hygiene') myLocalState.snack += 1;
             
             updateUI();
-            
-            // 每 5 秒定時將 AP 零食寫回雲端該帳號底下
             if (apTickCounter % 5 === 0) saveToCloud();
         }, 1000);
 
-        // 課堂時間伺服器計時
         setInterval(() => {
             if (!myId) return;
             db.ref('server_time').once('value', (snapshot) => {
@@ -499,4 +541,3 @@
     </script>
 </body>
 </html>
-
